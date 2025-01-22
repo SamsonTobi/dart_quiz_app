@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'questions.dart';
+import 'quiz_brain.dart';
+
+final quizBrain = QuizBrain();
 
 void main() {
   runApp(const Quizzler());
@@ -24,11 +26,6 @@ class Quizzler extends StatelessWidget {
   }
 }
 
-class ScoreIcons {
-  static const Icon correct = Icon(Icons.check, color: Colors.green);
-  static const Icon wrong = Icon(Icons.close, color: Colors.red);
-}
-
 class QuizPage extends StatefulWidget {
   const QuizPage({super.key});
 
@@ -36,13 +33,7 @@ class QuizPage extends StatefulWidget {
   State<QuizPage> createState() => _QuizPageState();
 }
 
-List<Icon> scoreKeeper = [];
 int currentQuestion = 0;
-List<Question> questions = [
-  Question('You can lead a cow down the stairs but not up the stairs', false),
-  Question('Approximately one quarter of human bones are in the feet', true),
-  Question('A slug\'s blood is green', true),
-];
 
 class _QuizPageState extends State<QuizPage> {
   @override
@@ -50,10 +41,18 @@ class _QuizPageState extends State<QuizPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          'Question ${currentQuestion + 1} out of ${quizBrain.questionBank.length}',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 16,
+          ),
+        ),
         Expanded(
           child: Center(
             child: Text(
-              questions[currentQuestion].question,
+              quizBrain.questionBank[currentQuestion].question,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
@@ -69,10 +68,9 @@ class _QuizPageState extends State<QuizPage> {
               shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.zero)),
           onPressed: () {
-            bool answer = questions[currentQuestion].answer;
+            bool answer = quizBrain.questionBank[currentQuestion].answer;
+            quizBrain.handleScores(answer, true);
 
-            scoreKeeper
-                .add(answer == true ? ScoreIcons.correct : ScoreIcons.wrong);
             setState(() {
               currentQuestion++;
             });
@@ -93,10 +91,9 @@ class _QuizPageState extends State<QuizPage> {
               shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.zero)),
           onPressed: () {
-            bool answer = questions[currentQuestion].answer;
+            bool answer = quizBrain.questionBank[currentQuestion].answer;
+            quizBrain.handleScores(answer, false);
 
-            scoreKeeper
-                .add(answer == false ? ScoreIcons.correct : ScoreIcons.wrong);
             setState(() {
               currentQuestion++;
             });
@@ -109,11 +106,11 @@ class _QuizPageState extends State<QuizPage> {
             ),
           ),
         ),
-        SizedBox(
+        const SizedBox(
           height: 12,
         ),
         Row(
-          children: scoreKeeper,
+          children: quizBrain.scoreKeeper,
         )
       ],
     );
