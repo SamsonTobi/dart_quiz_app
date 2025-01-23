@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'quiz_brain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 final quizBrain = QuizBrain();
 
@@ -33,16 +34,66 @@ class QuizPage extends StatefulWidget {
   State<QuizPage> createState() => _QuizPageState();
 }
 
-int currentQuestion = 0;
-
 class _QuizPageState extends State<QuizPage> {
+  List<Icon> scoreKeeper = [];
+
+  void handleScores(bool userPickedAnswer) {
+    scoreKeeper.add(quizBrain.getCorrectAnswer() == userPickedAnswer
+        ? ScoreIcons.correct
+        : ScoreIcons.wrong);
+
+    setState(() {
+      if (quizBrain.isFinished() == true) {
+        _onBasicAlertPressed(context);
+      }
+
+      quizBrain.nextQuestion();
+    });
+  }
+
+  void restartQuiz() {
+    setState(() {
+      quizBrain.resetQuiz();
+      scoreKeeper = [];
+    });
+    Navigator.pop(context);
+  }
+
+  _onBasicAlertPressed(context) {
+    Alert(
+      context: context,
+      type: AlertType.info,
+      closeFunction: () {
+        restartQuiz();
+      },
+      onWillPopActive: true,
+      title: "End of Quiz",
+      desc: "You've gotten to the end of this quiz",
+      style: const AlertStyle(
+        overlayColor: Color(0x55000000),
+      ),
+      buttons: [
+        DialogButton(
+          onPressed: () {
+            restartQuiz();
+          },
+          width: 120,
+          child: const Text(
+            "Restart Quiz",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+        )
+      ],
+    ).show();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Question ${currentQuestion + 1} out of ${quizBrain.questionBank.length}',
+          'Question ${quizBrain.currentQuestion + 1} out of ${quizBrain.questionsLength}',
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Colors.white54,
@@ -52,7 +103,7 @@ class _QuizPageState extends State<QuizPage> {
         Expanded(
           child: Center(
             child: Text(
-              quizBrain.questionBank[currentQuestion].question,
+              quizBrain.getQuestionText(),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
@@ -68,12 +119,7 @@ class _QuizPageState extends State<QuizPage> {
               shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.zero)),
           onPressed: () {
-            bool answer = quizBrain.questionBank[currentQuestion].answer;
-            quizBrain.handleScores(answer, true);
-
-            setState(() {
-              currentQuestion++;
-            });
+            handleScores(true);
           },
           child: const Text(
             'True',
@@ -91,12 +137,7 @@ class _QuizPageState extends State<QuizPage> {
               shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.zero)),
           onPressed: () {
-            bool answer = quizBrain.questionBank[currentQuestion].answer;
-            quizBrain.handleScores(answer, false);
-
-            setState(() {
-              currentQuestion++;
-            });
+            handleScores(false);
           },
           child: const Text(
             'False',
@@ -110,8 +151,8 @@ class _QuizPageState extends State<QuizPage> {
           height: 12,
         ),
         Row(
-          children: quizBrain.scoreKeeper,
-        )
+          children: scoreKeeper,
+        ),
       ],
     );
   }
